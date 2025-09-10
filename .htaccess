@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Pass OPTIONS requests to backend
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ http://127.0.0.1:5001/$1 [P,L]
+
+# Pass normal API requests
+RewriteCond %{REQUEST_URI} ^/api
+RewriteRule ^api/(.*)$ http://127.0.0.1:5001/api/$1 [P,L]
