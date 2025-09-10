@@ -6,10 +6,15 @@ const listAllShop = async (req, res) => {
     let limit = parseInt(req.query.limit) || 10;
 
     let offset = (page - 1) * limit;
+    let whereCondition = {}
 
     let { rows: items, count } = await ShopModel.findAndCountAll({
       limit,
       offset,
+      where: {
+        ...whereCondition,
+        status: "active"
+      }
     });
 
     return res.status(200).json({
