@@ -14,13 +14,18 @@ app.use(helmet());
 app.use(morgan("combined", { stream: logger.stream }));
 app.use(express.json());
 
-const whitelist = ["http://localhost:5173", "https://smarthisabkitab.com"];
+const whitelist = [
+  "http://localhost:5173",
+  "https://smarthisabkitab.com",
+  "https://api.smarthisabkitab.com",
+];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests)
-    if (!origin || whitelist.includes(origin)) {
-      callback(null, true);
+    if (!origin) {
+      callback(null, "*");
+    } else if (whitelist.includes(origin)) {
+      callback(null, origin);
     } else {
       callback(new Error("Not allowed by CORS"));
     }
