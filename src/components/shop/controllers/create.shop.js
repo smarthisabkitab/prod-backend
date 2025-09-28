@@ -12,8 +12,6 @@ export const createShop = async (req, res) => {
   try {
     let { error, value } = createShopValidate.validate(req.body);
 
-    console.log(value)
-
     if (error) {
       return res.status(400).json({
         success: false,

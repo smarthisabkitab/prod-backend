@@ -1,9 +1,23 @@
-RewriteEngine On
+<VirtualHost *:80>
+    ServerName api.smarthisabkitab.com/
 
-# Pass OPTIONS requests to backend
-RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^(.*)$ http://127.0.0.1:5001/$1 [P,L]
+    ProxyPreserveHost On
 
-# Pass normal API requests
-RewriteCond %{REQUEST_URI} ^/api
-RewriteRule ^api/(.*)$ http://127.0.0.1:5001/api/$1 [P,L]
+    # Proxy /api routes
+    ProxyPass /api http://127.0.0.1:5001/api
+    ProxyPassReverse /api http://127.0.0.1:5001/api
+
+    # Proxy other requests (like /)
+    ProxyPass / http://127.0.0.1:5001/
+    ProxyPassReverse / http://127.0.0.1:5001/
+
+    # Optional: Allow OPTIONS method through proxy
+    <If "%{REQUEST_METHOD} == 'OPTIONS'">
+        ProxyPass / http://127.0.0.1:5001/
+        ProxyPassReverse / http://127.0.0.1:5001/
+    </If>
+
+    # Logs for debugging
+    ErrorLog ${APACHE_LOG_DIR}/api-error.log
+    CustomLog ${APACHE_LOG_DIR}/api-access.log combined
+</VirtualHost>

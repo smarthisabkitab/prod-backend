@@ -42,19 +42,11 @@ const createShopModels = (sequelize) => {
       },
       phone_no: {
         type: DataTypes.STRING(15),
-        allowNull: true,
+        allowNull: false,
       },
       address: {
         type: DataTypes.STRING(255),
         allowNull: true,
-      },
-      notes: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      total_purchase_amount: {
-        type: DataTypes.DECIMAL(12, 2),
-        defaultValue: 0.0,
       },
     },
     {
@@ -71,33 +63,66 @@ const createShopModels = (sequelize) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      name: {
+      date_of_issue: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      product_name: {
         type: DataTypes.STRING(100),
         allowNull: false,
       },
-      category: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
+      quantity: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
       },
-      purity: {
-        type: DataTypes.ENUM("22K", "18K", "14K", "10K"),
-        defaultValue: "22K",
-      },
-      weight: {
+      total_weight: {
         type: DataTypes.DECIMAL(10, 3),
         allowNull: false,
       },
-      price: {
+      given_amount: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
       },
-      making_charge: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
+      intrest_rate: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false,
+        defaultValue: 36,
       },
-      stock_quantity: {
+      time_duration: {
         type: DataTypes.INTEGER,
-        defaultValue: 0,
+        allowNull: false,
+      },
+      received_interest: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0.0,
+      },
+      status: {
+        type: DataTypes.ENUM("active", "inactive"),
+        defaultValue: "active",
+      },
+      add_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0.0,
+      },
+      decrease_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0.0,
+      },
+      amount_changed_date: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      amount_end_date: { type: DataTypes.DATE, allowNull: false },
+      bank_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      notes: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       },
     },
     {
@@ -106,96 +131,10 @@ const createShopModels = (sequelize) => {
     }
   );
 
-  const Transaction = sequelize.define(
-    "Transaction",
-    {
-      id: {
-        type: DataTypes.BIGINT,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      transaction_type: {
-        type: DataTypes.ENUM("sale", "purchase", "return", "exchange"),
-        allowNull: false,
-      },
-      amount: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-      },
-      gold_weight: {
-        type: DataTypes.DECIMAL(10, 3),
-        allowNull: true,
-      },
-      making_charge: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
-      },
-      gold_rate: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
-      },
-      description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      transaction_date: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-      invoice_number: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
-        unique: true,
-      },
-    },
-    {
-      tableName: "transactions",
-      timestamps: true,
-    }
-  );
-
-  const TransactionItem = sequelize.define(
-    "TransactionItem",
-    {
-      id: {
-        type: DataTypes.BIGINT,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      quantity: {
-        type: DataTypes.INTEGER,
-        defaultValue: 1,
-      },
-      unit_price: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-      },
-      total_price: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-      },
-    },
-    {
-      tableName: "transaction_items",
-      timestamps: false,
-    }
-  );
-
   // Define associations
-  Customer.hasMany(Transaction, { foreignKey: "customer_id" });
-  Transaction.belongsTo(Customer, { foreignKey: "customer_id" });
-
-  Transaction.hasMany(TransactionItem, { foreignKey: "transaction_id" });
-  TransactionItem.belongsTo(Transaction, { foreignKey: "transaction_id" });
-
-  Product.hasMany(TransactionItem, { foreignKey: "product_id" });
-  TransactionItem.belongsTo(Product, { foreignKey: "product_id" });
-
   return {
     Customer,
     Product,
-    Transaction,
-    TransactionItem,
     sequelize,
   };
 };

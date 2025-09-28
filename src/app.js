@@ -13,6 +13,7 @@ const app = express();
 app.use(helmet());
 app.use(morgan("combined", { stream: logger.stream }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const whitelist = [
   "http://localhost:5173",
