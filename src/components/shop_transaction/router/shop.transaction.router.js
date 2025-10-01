@@ -1,6 +1,8 @@
 import express from "express";
 
 import { createShopTransaction } from "../controller/create.shop.transaction.js";
+import { readShopTransaction } from "../controller/read.shop.transaction.js";
+
 import {
   multerConfig,
   handleMulterError,
@@ -8,11 +10,9 @@ import {
 
 const shopTransactionRouter = express.Router();
 
-shopTransactionRouter.post(
-  "/upload",
-  multerConfig.single("file"),
-  createShopTransaction
-);
+shopTransactionRouter
+  .post("/upload/:shop_id", multerConfig.single("file"), createShopTransaction)
+  .get("/read/:shop_id", readShopTransaction);
 
 shopTransactionRouter.use(handleMulterError);
 

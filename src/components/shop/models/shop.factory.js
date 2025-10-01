@@ -79,11 +79,42 @@ const createShopModels = (sequelize) => {
         type: DataTypes.DECIMAL(10, 3),
         allowNull: false,
       },
+    },
+    {
+      tableName: "products",
+      timestamps: true,
+    }
+  );
+
+  const Transaction = sequelize.define(
+    "Transaction",
+    {
+      id: {
+        type: DataTypes.BIGINT,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      customer_id: {
+        type: DataTypes.BIGINT,
+        allowNull: false,
+      },
+      product_id: {
+        type: DataTypes.BIGINT,
+        allowNull: false,
+      },
+      shop_id: {
+        type: DataTypes.BIGINT,
+        allowNull: false,
+      },
+      pledged_date: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
       given_amount: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
+        allowNull: false,
       },
-      intrest_rate: {
+      interest_rate: {
         type: DataTypes.DECIMAL(5, 2),
         allowNull: false,
         defaultValue: 36,
@@ -94,31 +125,31 @@ const createShopModels = (sequelize) => {
       },
       received_interest: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
         defaultValue: 0.0,
       },
       status: {
-        type: DataTypes.ENUM("active", "inactive"),
+        type: DataTypes.ENUM("active", "inactive", "closed"),
         defaultValue: "active",
       },
       add_amount: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
         defaultValue: 0.0,
       },
       decrease_amount: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
         defaultValue: 0.0,
       },
       amount_changed_date: {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      amount_end_date: { type: DataTypes.DATE, allowNull: false },
+      amount_end_date: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       bank_number: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       notes: {
         type: DataTypes.TEXT,
@@ -126,7 +157,7 @@ const createShopModels = (sequelize) => {
       },
     },
     {
-      tableName: "products",
+      tableName: "transactions",
       timestamps: true,
     }
   );
@@ -135,6 +166,7 @@ const createShopModels = (sequelize) => {
   return {
     Customer,
     Product,
+    Transaction,
     sequelize,
   };
 };
