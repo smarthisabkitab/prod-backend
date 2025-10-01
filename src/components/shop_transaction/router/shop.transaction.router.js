@@ -1,7 +1,12 @@
 import express from "express";
 
 import { createShopTransaction } from "../controller/create.shop.transaction.js";
-import { readShopTransaction } from "../controller/read.shop.transaction.js";
+import {
+  readShopTransaction,
+  readShopCustomers,
+  readShopProducts,
+  readShopTransactions,
+} from "../controller/read.shop.transaction.js";
 
 import {
   multerConfig,
@@ -12,7 +17,10 @@ const shopTransactionRouter = express.Router();
 
 shopTransactionRouter
   .post("/upload/:shop_id", multerConfig.single("file"), createShopTransaction)
-  .get("/read/:shop_id", readShopTransaction);
+  .get("/read/:shop_id", readShopTransaction)
+  .get("/:shop_id/customers", readShopCustomers)
+  .get("/:shop_id/products", readShopProducts)
+  .get("/:shop_id/transactions", readShopTransactions);
 
 shopTransactionRouter.use(handleMulterError);
 

@@ -36,7 +36,10 @@ export const createShopTransaction = async (req, res) => {
 
     // Get shop-specific connection + models
     const shopSequelize = createShopConnection(shop.db_name);
-    const { Customer, Product } = createShopModels(shopSequelize);
+    const { Customer, Product, Transaction } = createShopModels(shopSequelize);
+
+    // Test connection and sync if needed
+    await shopSequelize.authenticate();
 
     const results = [];
 
@@ -55,55 +58,93 @@ export const createShopTransaction = async (req, res) => {
         .on("error", (err) => reject(err));
     });
 
+    if (results.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "CSV file is empty or invalid",
+      });
+    }
+
     // Now insert into DB
     transaction = await shopSequelize.transaction();
 
     const customerMap = new Map();
-    const insertedProducts = [];
+    const insertedTransactions = [];
 
-    for (const row of results) {
-      const phone = row.phone_no?.trim();
-      if (!phone) continue;
+    for (const [index, row] of results.entries()) {
+      try {
+        const phone = row.phone_no?.trim();
+        if (!phone) {
+          console.warn(`Skipping row ${index + 1}: No phone number provided`);
+          continue;
+        }
 
-      let customerId;
-      if (customerMap.has(phone)) {
-        customerId = customerMap.get(phone);
-      } else {
-        const [customer] = await Customer.findOrCreate({
-          where: { phone_no: phone },
-          defaults: {
-            fullname: row.fullname.trim() || "Unknown",
-            address: row.address.trim() || "",
+        // Find or create customer
+        let customerId;
+        if (customerMap.has(phone)) {
+          customerId = customerMap.get(phone);
+        } else {
+          const [customer] = await Customer.findOrCreate({
+            where: { phone_no: phone },
+            defaults: {
+              fullname: row.fullname?.trim() || "Unknown",
+              address: row.address?.trim() || "",
+            },
+            transaction,
+          });
+          customerId = customer.id;
+          customerMap.set(phone, customerId);
+        }
+
+        // Create product first
+        const product = await Product.create(
+          {
+            date_of_issue: row.date_of_issue ? new Date(row.date_of_issue.trim()) : new Date(),
+            product_name: row.product_name?.trim() || row.particulars?.trim() || "N/A",
+            quantity: parseInt(row.quantity?.trim()) || 1,
+            total_weight: parseFloat(row.total_weight?.trim()) || 0,
           },
+          { transaction }
+        );
+
+        // Create transaction with proper field mapping
+        const transactionData = {
+          customer_id: customerId,
+          product_id: product.id,
+          shop_id: parseInt(shop_id),
+          pledged_date: row.pledged_date ? new Date(row.pledged_date.trim()) : new Date(),
+          given_amount: parseFloat(row.given_amount?.trim()) || 0,
+          interest_rate: parseFloat(row.interest_rate?.trim()) || parseFloat(row.intrest_rate?.trim()) || 36, // Handle typo in CSV
+          time_duration: parseInt(row.time_duration?.trim()) || 30, // Default 30 days
+          received_interest: parseFloat(row.received_interest?.trim()) || 0,
+          status: (row.status?.trim() && ['active', 'inactive', 'closed'].includes(row.status.trim().toLowerCase())) 
+            ? row.status.trim().toLowerCase() 
+            : 'active',
+          add_amount: parseFloat(row.add_amount?.trim()) || 0,
+          decrease_amount: parseFloat(row.decrease_amount?.trim()) || 0,
+          amount_changed_date: row.amount_changed_date ? new Date(row.amount_changed_date.trim()) : null,
+          amount_end_date: row.amount_end_date ? new Date(row.amount_end_date.trim()) : null,
+          bank_number: row.bank_number?.trim() || null,
+          notes: row.notes?.trim() || null,
+        };
+
+        const shopTransaction = await Transaction.create(transactionData, {
           transaction,
         });
-        customerId = customer.id;
-        customerMap.set(phone, customerId);
+
+        insertedTransactions.push(shopTransaction);
+      } catch (rowError) {
+        console.error(`Error processing row ${index + 1}:`, rowError);
+        throw new Error(`Failed to process row ${index + 1}: ${rowError.message}`);
       }
+    }
 
-      const product = await Product.create(
-        {
-          customer_id: customerId,
-          date_of_issue: row.pledged_date.trim() || new Date(),
-          product_name: row.particulars.trim() || "N/A",
-          quantity: parseInt(row.quantity.trim()) || 0,
-          total_weight: parseFloat(row.total_weight.trim()) || 0,
-          given_amount: parseFloat(row.given_amount.trim()) || 0,
-          intrest_rate: parseFloat(row.intrest_rate) || 36,
-          time_duration: parseInt(row.time_duration) || 0,
-          received_interest: parseFloat(row.received_interest) || 0,
-          status: row.status || "active",
-          add_amount: parseFloat(row.add_amount) || 0,
-          decrease_amount: parseFloat(row.decrease_amount) || 0,
-          amount_changed_date: row.amount_changed_date || null,
-          amount_end_date: row.amount_end_date || new Date(),
-          bank_number: row.bank_number || null,
-          notes: row.notes || null,
-        },
-        { transaction }
-      );
-
-      insertedProducts.push(product);
+    if (insertedTransactions.length === 0) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "No valid data found to import",
+      });
     }
 
     await transaction.commit();
@@ -111,15 +152,16 @@ export const createShopTransaction = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Data Uploaded Successfully",
-      inserted_count: insertedProducts.length,
-      items: insertedProducts,
+      inserted_count: insertedTransactions.length,
+      customers_processed: customerMap.size,
+      items: insertedTransactions,
     });
   } catch (error) {
     if (transaction) await transaction.rollback();
-    console.error(`Shop Transaction -> ${error}`);
+    console.error(`Shop Transaction Import Error -> ${error.message}`);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "Failed to import data",
       error: error.message,
     });
   } finally {
