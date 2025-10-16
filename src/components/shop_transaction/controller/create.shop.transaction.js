@@ -99,8 +99,11 @@ export const createShopTransaction = async (req, res) => {
         // Create product first
         const product = await Product.create(
           {
-            date_of_issue: row.date_of_issue ? new Date(row.date_of_issue.trim()) : new Date(),
-            product_name: row.product_name?.trim() || row.particulars?.trim() || "N/A",
+            date_of_issue: row.date_of_issue
+              ? new Date(row.date_of_issue.trim())
+              : new Date(),
+            product_name:
+              row.product_name?.trim() || row.particulars?.trim() || "N/A",
             quantity: parseInt(row.quantity?.trim()) || 1,
             total_weight: parseFloat(row.total_weight?.trim()) || 0,
           },
@@ -112,30 +115,58 @@ export const createShopTransaction = async (req, res) => {
           customer_id: customerId,
           product_id: product.id,
           shop_id: parseInt(shop_id),
-          pledged_date: row.pledged_date ? new Date(row.pledged_date.trim()) : new Date(),
+          pledged_date: row.pledged_date
+            ? new Date(row.pledged_date.trim())
+            : new Date(),
           given_amount: parseFloat(row.given_amount?.trim()) || 0,
-          interest_rate: parseFloat(row.interest_rate?.trim()) || parseFloat(row.intrest_rate?.trim()) || 36, // Handle typo in CSV
+          interest_rate:
+            parseFloat(row.interest_rate?.trim()) ||
+            parseFloat(row.intrest_rate?.trim()) ||
+            36, // Handle typo in CSV
           time_duration: parseInt(row.time_duration?.trim()) || 30, // Default 30 days
           received_interest: parseFloat(row.received_interest?.trim()) || 0,
-          status: (row.status?.trim() && ['active', 'inactive', 'closed'].includes(row.status.trim().toLowerCase())) 
-            ? row.status.trim().toLowerCase() 
-            : 'active',
+          status:
+            row.status?.trim() &&
+            ["active", "inactive", "closed"].includes(
+              row.status.trim().toLowerCase()
+            )
+              ? row.status.trim().toLowerCase()
+              : "active",
           add_amount: parseFloat(row.add_amount?.trim()) || 0,
           decrease_amount: parseFloat(row.decrease_amount?.trim()) || 0,
-          amount_changed_date: row.amount_changed_date ? new Date(row.amount_changed_date.trim()) : null,
-          amount_end_date: row.amount_end_date ? new Date(row.amount_end_date.trim()) : null,
+          amount_changed_date: row.amount_changed_date
+            ? new Date(row.amount_changed_date.trim())
+            : null,
+          amount_end_date: row.amount_end_date
+            ? new Date(row.amount_end_date.trim())
+            : null,
           bank_number: row.bank_number?.trim() || null,
           notes: row.notes?.trim() || null,
         };
 
-        const shopTransaction = await Transaction.create(transactionData, {
-          transaction,
-        });
+        const txInstance = Transaction.build(transactionData);
+        txInstance.calculated_interest = txInstance.calculateInterest(
+          row.amount_end_date || new Date()
+        );
+        txInstance.due_date = new Date(txInstance.pledged_date);
+        txInstance.due_date.setDate(
+          txInstance.due_date.getDate() + txInstance.time_duration
+        );
+        txInstance.pending_amount =
+          txInstance.given_amount +
+          txInstance.add_amount -
+          txInstance.decrease_amount +
+          txInstance.calculated_interest -
+          txInstance.received_interest;
+
+        const shopTransaction = await txInstance.save({ transaction });
 
         insertedTransactions.push(shopTransaction);
       } catch (rowError) {
         console.error(`Error processing row ${index + 1}:`, rowError);
-        throw new Error(`Failed to process row ${index + 1}: ${rowError.message}`);
+        throw new Error(
+          `Failed to process row ${index + 1}: ${rowError.message}`
+        );
       }
     }
 

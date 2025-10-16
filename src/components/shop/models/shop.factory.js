@@ -94,42 +94,19 @@ const createShopModels = (sequelize) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      customer_id: {
-        type: DataTypes.BIGINT,
-        allowNull: false,
-      },
-      product_id: {
-        type: DataTypes.BIGINT,
-        allowNull: false,
-      },
-      shop_id: {
-        type: DataTypes.BIGINT,
-        allowNull: false,
-      },
-      pledged_date: {
-        type: DataTypes.DATE,
-        allowNull: false,
-      },
-      given_amount: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-      },
+      customer_id: DataTypes.BIGINT,
+      product_id: DataTypes.BIGINT,
+      shop_id: DataTypes.BIGINT,
+      pledged_date: DataTypes.DATE,
+      given_amount: DataTypes.DECIMAL(10, 2),
       interest_rate: {
         type: DataTypes.DECIMAL(5, 2),
-        allowNull: false,
         defaultValue: 36,
       },
-      time_duration: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
+      time_duration: DataTypes.INTEGER,
       received_interest: {
         type: DataTypes.DECIMAL(10, 2),
         defaultValue: 0.0,
-      },
-      status: {
-        type: DataTypes.ENUM("active", "inactive", "closed"),
-        defaultValue: "active",
       },
       add_amount: {
         type: DataTypes.DECIMAL(10, 2),
@@ -139,20 +116,21 @@ const createShopModels = (sequelize) => {
         type: DataTypes.DECIMAL(10, 2),
         defaultValue: 0.0,
       },
-      amount_changed_date: {
+      amount_changed_date: DataTypes.DATE,
+      amount_end_date: DataTypes.DATE,
+      bank_number: DataTypes.STRING,
+      notes: DataTypes.TEXT,
+
+      calculated_interest: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0.0,
+      },
+      pending_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0.0,
+      },
+      due_date: {
         type: DataTypes.DATE,
-        allowNull: true,
-      },
-      amount_end_date: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-      bank_number: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      notes: {
-        type: DataTypes.TEXT,
         allowNull: true,
       },
     },
@@ -168,6 +146,39 @@ const createShopModels = (sequelize) => {
 
   Product.hasMany(Transaction, { foreignKey: "product_id" });
   Transaction.belongsTo(Product, { foreignKey: "product_id" });
+
+  Transaction.addHook("beforeCreate", (transaction) => {
+    const pledgedDate = new Date(transaction.pledged_date);
+    const today = new Date();
+    const duration = transaction.time_duration || 30;
+
+    // Calculate due date
+    transaction.due_date = new Date(pledgedDate);
+    transaction.due_date.setDate(pledgedDate.getDate() + duration);
+
+    // Interest calculation
+    const asOf = transaction.amount_end_date || today;
+    const days = (asOf - pledgedDate) / (1000 * 60 * 60 * 24);
+    const dailyRate = transaction.interest_rate / 100 / 365;
+    const totalInterest =
+      transaction.given_amount * dailyRate * Math.max(days, 0);
+
+    transaction.calculated_interest = totalInterest;
+
+    // Pending amount
+    transaction.pending_amount = (
+      transaction.given_amount +
+      transaction.add_amount -
+      transaction.decrease_amount +
+      totalInterest -
+      transaction.received_interest
+    ).toFixed(2);
+
+    // Auto-close if overdue and fully paid
+    if (transaction.pending_amount <= 0) {
+      transaction.status = "closed";
+    }
+  });
 
   Transaction.prototype.calculateInterest = function (asOfDate = new Date()) {
     const calculationDate = new Date(asOfDate);
