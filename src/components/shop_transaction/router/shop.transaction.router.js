@@ -7,7 +7,7 @@ import {
   readShopProducts,
   readShopTransactions,
 } from "../controller/read.shop.transaction.js";
-
+import { editShopTransaction } from "../controller/edit.shop.transaction.js";
 import { deleteShopTransaction } from "../controller/delete.shop.transaction.js";
 
 import {
@@ -23,7 +23,8 @@ shopTransactionRouter
   .get("/:shop_id/customers", readShopCustomers)
   .get("/:shop_id/products", readShopProducts)
   .get("/:shop_id/transactions", readShopTransactions)
-  .delete("/delete", deleteShopTransaction);
+  .delete("/delete", deleteShopTransaction)
+  .patch("/:shop_id/transactions/:transaction_id", editShopTransaction);
 
 shopTransactionRouter.use(handleMulterError);
 
