@@ -5,6 +5,10 @@ export const createShopValidate = Joi.object({
   shop_name: Joi.string().required(),
   status: Joi.valid("active", "inactive").default("active"),
   settings: Joi.object().allow(null),
+  address: Joi.string().required(),
+  phone_no: Joi.string().max(15).required(),
+  owner_name: Joi.string().required(),
+  description: Joi.string().allow(""),
 });
 
 export const updateShopValidate = Joi.object({

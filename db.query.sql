@@ -35,6 +35,10 @@ CREATE TABLE IF NOT EXISTS shops (
     db_name VARCHAR(100) NOT NULL UNIQUE, -- each shop has separate DB
     status ENUM("active", "inactive") DEFAULT "active",
     settings JSON NULL, -- Store shop-specific settings in JSON
+    address VARCHAR(255) NOT NULL,
+    phone_no VARCHAR(15) NOT NULL,
+    owner_name VARCHAR(100) NOT NULL,
+    description TEXT NULL,
 
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
