@@ -32,6 +32,10 @@ ShopModel.init(
       type: DataTypes.STRING(15),
       allowNull: false,
     },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     owner_name: {
       type: DataTypes.STRING,
       allowNull: false,

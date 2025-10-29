@@ -7,6 +7,7 @@ export const createShopValidate = Joi.object({
   settings: Joi.object().allow(null),
   address: Joi.string().required(),
   phone_no: Joi.string().max(15).required(),
+  email: Joi.string().email().required(),
   owner_name: Joi.string().required(),
   description: Joi.string().allow(""),
 });

@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS shops (
     address VARCHAR(255) NOT NULL,
     phone_no VARCHAR(15) NOT NULL,
     owner_name VARCHAR(100) NOT NULL,
+    email varchar(255) not null,
     description TEXT NULL,
 
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
