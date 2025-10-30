@@ -4,17 +4,34 @@ const listAllShop = async (req, res) => {
   try {
     let page = parseInt(req.query.page) || 1;
     let limit = parseInt(req.query.limit) || 10;
+    let status = req.query.status || "active";
+    let user_id = req.query.user_id || null;
+    let sort = req.query.sort || "createdAt";
+    let order = req.query.order.toUpperCase() || "DESC";
+
+    if (!user_id || user_id === null) {
+      console.error("Shop -> User Id is missing");
+      return res.status(400).json({
+        success: false,
+        message: "User Id is missing",
+      });
+    }
 
     let offset = (page - 1) * limit;
-    let whereCondition = {}
+
+    let whereCondition = {
+      user_id,
+    };
+
+    if (status) whereCondition.status = status;
 
     let { rows: items, count } = await ShopModel.findAndCountAll({
       limit,
       offset,
       where: {
         ...whereCondition,
-        status: "active"
-      }
+      },
+      order: [[sort, order]],
     });
 
     return res.status(200).json({
@@ -28,12 +45,12 @@ const listAllShop = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error while listing all shop: ", error)
+    console.error("Error while listing all shop: ", error);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
-      error
-    })
+      error,
+    });
   }
 };
 
