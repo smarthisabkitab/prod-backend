@@ -7,7 +7,7 @@ const listAllShop = async (req, res) => {
     let status = req.query.status || "active";
     let user_id = req.query.user_id || null;
     let sort = req.query.sort || "createdAt";
-    let order = req.query.order.toUpperCase() || "DESC";
+    let order = req.query.order ? req.query.order.toUpperCase() : "DESC";
 
     if (!user_id || user_id === null) {
       console.error("Shop -> User Id is missing");
@@ -56,15 +56,29 @@ const listAllShop = async (req, res) => {
 
 const shopDetails = async (req, res) => {
   try {
-    let { shop_id } = req.query;
+    let { id } = req.params;
 
-    if (!shop_id) {
+    if (!id) {
       return res.status(404).json({
         success: false,
         message: "Shop Id is missing",
       });
     }
-  } catch (error) {}
+
+    let item = await ShopModel.findByPk(id);
+
+    return res.status(200).json({
+      success: true,
+      item,
+    });
+  } catch (error) {
+    console.error("Error while displaying shop details: ", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error,
+    });
+  }
 };
 
 export { listAllShop, shopDetails };
