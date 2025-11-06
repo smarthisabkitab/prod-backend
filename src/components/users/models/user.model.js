@@ -49,6 +49,10 @@ UserModel.init(
       allowNull: false,
       defaultValue: new Date(),
     },
+    refreshToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     sequelize,

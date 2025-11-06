@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import helmet from "helmet";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import { logger } from "./utils/logger.js";
 import { authenticate } from "./config/database.js";
@@ -10,6 +11,7 @@ import apiRoute from "./api.route.js";
 const app = express();
 
 // Middleware
+app.use(cookieParser());
 app.use(helmet());
 app.use(morgan("combined", { stream: logger.stream }));
 app.use(express.json());
@@ -31,7 +33,7 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // If you need to allow cookies/auth
   optionsSuccessStatus: 200,

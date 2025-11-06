@@ -34,6 +34,18 @@ const listAllShop = async (req, res) => {
       order: [[sort, order]],
     });
 
+    items = items.map((shop) => {
+      let shopData = shop.toJSON();
+      try {
+        shopData.settings = shopData.settings
+          ? JSON.parse(shopData.settings)
+          : {};
+      } catch (err) {
+        shopData.settings = {}; // fallback if parsing fails
+      }
+      return shopData;
+    });
+
     return res.status(200).json({
       success: true,
       items,
@@ -67,9 +79,20 @@ const shopDetails = async (req, res) => {
 
     let item = await ShopModel.findByPk(id);
 
+    let shopData = item.toJSON();
+
+    // Safely parse settings
+    try {
+      shopData.settings = shopData.settings
+        ? JSON.parse(shopData.settings)
+        : {};
+    } catch (err) {
+      shopData.settings = {};
+    }
+
     return res.status(200).json({
       success: true,
-      item,
+      item: shopData,
     });
   } catch (error) {
     console.error("Error while displaying shop details: ", error);

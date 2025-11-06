@@ -27,4 +27,7 @@ export const ENV = {
   DB_POOL_MIN: process.env.DB_POOL_MIN,
   DB_POOL_ACQUIRE: process.env.DB_POOL_ACQUIRE,
   DB_POOL_IDLE: process.env.DB_POOL_IDLE,
+  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || "your-access-secret-key",
+  JWT_REFRESH_SECRET:
+    process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key",
 };
