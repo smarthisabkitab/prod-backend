@@ -2,6 +2,7 @@ import express from "express";
 
 import { listAllUsers } from "../controllers/list.user.controller.js";
 import { editProfileController } from "../controllers/edit.profile.controller.js";
+
 import { authenticateToken } from "../../../middleware/auth.middleware.js";
 import { requireAdmin } from "../../../middleware/role.middleware.js";
 

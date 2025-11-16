@@ -19,6 +19,35 @@ export const createShop = async (req, res) => {
       });
     }
 
+    let result = await sequelize.query(`select * from users where id=?`, {
+      replacements: [value.user_id],
+      type: sequelize.QueryTypes.SELECT,
+      transaction,
+    });
+
+    if (result.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    let existingShop = await sequelize.query(
+      `select * from shops where shop_name=?`,
+      {
+        replacements: [value.shop_name],
+        type: sequelize.QueryTypes.SELECT,
+        transaction,
+      }
+    );
+
+    if (existingShop.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Shop already exists with this name",
+      });
+    }
+
     const randomString = generateRandomString(6);
 
     const db_name = `shop_${Date.now()}_${randomString}`;

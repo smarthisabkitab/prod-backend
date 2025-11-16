@@ -1,6 +1,6 @@
-CREATE DATABASE gold_jewellery_dev;
+CREATE DATABASE smart_hisab_kitab_dev;
 
-use gold_jewellery_dev;
+use smart_hisab_kitab_dev;
 
 CREATE TABLE IF NOT EXISTS users(
     id bigint primary key auto_increment not null unique,
@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users(
     address varchar(100) not null,
     is_deleted tinyint(1) default 0,
     last_login timestamp default current_timestamp on update current_timestamp,
+    refreshToken VARCHAR(255) NULL,
 
     createdAt timestamp default current_timestamp,
     updatedAt timestamp default current_timestamp on update current_timestamp

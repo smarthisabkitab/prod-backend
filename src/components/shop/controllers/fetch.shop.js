@@ -1,4 +1,5 @@
 import ShopModel from "../models/shop.model.js";
+import { sequelize } from "../../../config/database.js";
 
 const listAllShop = async (req, res) => {
   try {
@@ -9,20 +10,33 @@ const listAllShop = async (req, res) => {
     let sort = req.query.sort || "createdAt";
     let order = req.query.order ? req.query.order.toUpperCase() : "DESC";
 
-    if (!user_id || user_id === null) {
-      console.error("Shop -> User Id is missing");
-      return res.status(400).json({
-        success: false,
-        message: "User Id is missing",
-      });
+    const transaction = await sequelize.transaction();
+
+    if (user_id === null || req.user.id) {
+      let existingUser = await sequelize.query(
+        `select * from users where id=?`,
+        {
+          replacements: [user_id !== null ? user_id : req.user.id],
+          type: sequelize.QueryTypes.SELECT,
+          transaction,
+        }
+      );
+
+      console.log("Output: ----", existingUser);
+
+      if (existingUser.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "User not found",
+        });
+      }
     }
 
     let offset = (page - 1) * limit;
 
-    let whereCondition = {
-      user_id,
-    };
+    let whereCondition = {};
 
+    if (user_id) whereCondition.user_id = user_id;
     if (status) whereCondition.status = status;
 
     let { rows: items, count } = await ShopModel.findAndCountAll({
