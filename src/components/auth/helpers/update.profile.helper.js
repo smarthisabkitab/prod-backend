@@ -10,3 +10,8 @@ export const updatePasswordSchema = Joi.object({
   newPassword: Joi.string().min(6).optional(),
   oldPassword: Joi.string().optional(),
 });
+
+export const profileUpdatePasswordSchema = Joi.object({
+  oldPassword: Joi.string().required(),
+  newPassword: Joi.string().min(6).required(),
+});

@@ -4,7 +4,10 @@ import { registerController } from "../controllers/register.controller.js";
 import { loginController } from "../controllers/login.controller.js";
 import { logoutController } from "../controllers/logout.controller.js";
 import { refreshTokenController } from "../controllers/token.controller.js";
-import { updatePassword } from "../controllers/password.reset.controller.js";
+import {
+  updatePassword,
+  profileUpdatePassword,
+} from "../controllers/password.reset.controller.js";
 import { deleteProfileController } from "../controllers/delete.profile.controller.js";
 
 import { authenticateToken } from "../../../middleware/auth.middleware.js";
@@ -17,6 +20,7 @@ auth
   .post("/logout", logoutController)
   .post("/refresh-token", refreshTokenController)
   .patch("/update-password", authenticateToken, updatePassword)
+  .patch("/profile-update-password", authenticateToken, profileUpdatePassword)
   .delete("/delete-profile", authenticateToken, deleteProfileController);
 
 export default auth;
