@@ -5,7 +5,7 @@ import { ENV } from "../../../config/env.js";
 
 export const refreshTokenController = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
       return res.status(401).json({

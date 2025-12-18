@@ -1,9 +1,10 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+
 import UserModel from "../../users/models/user.model.js";
 import SubscriptionModel from "../../subscriptions/models/subscription.model.js";
 import { loginHelper } from "../helpers/auth.helper.js";
 import { ENV } from "../../../config/env.js";
+import { accessTokenGen, refreshTokenGen } from "../helpers/token.gen.js";
 
 export const loginController = async (req, res) => {
   try {
@@ -43,26 +44,11 @@ export const loginController = async (req, res) => {
     }
 
     // Generate Access Token (short-lived)
-    const accessToken = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      ENV.JWT_ACCESS_SECRET,
-      { expiresIn: "15m" } // 15 minutes
-    );
+    const accessToken = accessTokenGen(user);
 
     // Generate Refresh Token (long-lived)
-    const refreshToken = jwt.sign(
-      {
-        id: user.id,
-      },
-      ENV.JWT_REFRESH_SECRET,
-      { expiresIn: "7d" } // 7 days
-    );
+    const refreshToken = refreshTokenGen(user);
 
-    // Store refresh token in database (optional but recommended)
     await UserModel.update({ refreshToken }, { where: { id: user.id } });
 
     // Set refresh token as HTTP-only cookie
