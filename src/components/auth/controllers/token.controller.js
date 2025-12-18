@@ -1,7 +1,9 @@
 import jwt from "jsonwebtoken";
+
 import UserModel from "../../../components/users/models/user.model.js";
 import SubscriptionModel from "../../../components/subscriptions/models/subscription.model.js";
 import { ENV } from "../../../config/env.js";
+import { accessTokenGen, refreshTokenGen } from "../helpers/token.gen.js";
 
 export const refreshTokenController = async (req, res) => {
   try {
@@ -39,28 +41,35 @@ export const refreshTokenController = async (req, res) => {
       });
     }
 
-    // Generate new access token
-    const newAccessToken = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      ENV.JWT_ACCESS_SECRET,
-      { expiresIn: "15m" }
-    );
+    // Generate new access and refresh token
+    const newAccessToken = accessTokenGen(user);
+    const newRefreshToken = refreshTokenGen(user);
 
-    return res.status(200).json({
-      success: true,
-      accessToken: newAccessToken,
-      user: {
-        id: user.id,
-        fullname: user.fullname,
-        email: user.email,
-        role: user.role,
-        subscription: user.subscription,
-      },
-    });
+    await UserModel.update({ refreshToken }, { where: { id: user.id } });
+
+    const cookieAccess = {
+      httpOnly: true,
+      secure: ENV.NODE_ENV === "production",
+      sameSite: ENV.NODE_ENV === "production" ? "none" : "lax",
+      domain:
+        ENV.NODE_ENV === "production" ? ".smarthisabkitab.com" : undefined,
+      maxAge: 24 * 60 * 60 * 1000,
+      path: "/",
+    };
+
+    const cookieRefresh = {
+      ...cookieAccess,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+
+    return res
+      .cookie("accessToken", newAccessToken, cookieAccess)
+      .cookie("refreshToken", newRefreshToken, cookieRefresh)
+      .status(200)
+      .json({
+        success: true,
+        message: "Refreshed Successfully",
+      });
   } catch (error) {
     console.error("Refresh token error: ", error);
 

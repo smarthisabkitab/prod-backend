@@ -52,26 +52,32 @@ export const loginController = async (req, res) => {
     await UserModel.update({ refreshToken }, { where: { id: user.id } });
 
     // Set refresh token as HTTP-only cookie
-    res.cookie("refreshToken", refreshToken, {
+    const cookieAccess = {
       httpOnly: true,
       secure: ENV.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+      sameSite: ENV.NODE_ENV === "production" ? "none" : "lax",
+      domain:
+        ENV.NODE_ENV === "production" ? ".smarthisabkitab.com" : undefined,
+      maxAge: 24 * 60 * 60 * 1000,
+      path: "/",
+    };
 
-    return res.status(200).json({
-      success: true,
-      message: "Login successful",
-      accessToken,
-      user: {
-        id: user.id,
-        fullname: user.fullname,
-        email: user.email,
-        role: user.role,
-        subscription: user.subscription,
-        phone_no: user.phone_no,
-      },
-    });
+    const cookieRefresh = {
+      ...cookieAccess,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+
+    return res
+      .cookie("accessToken", accessToken, cookieAccess)
+      .cookie("refreshToken", refreshToken, cookieRefresh)
+      .status(200)
+      .json({
+        success: true,
+        message: "Login successful",
+        items: {
+          id: user.id,
+        },
+      });
   } catch (error) {
     console.error("Login error: ", error);
     return res.status(500).json({

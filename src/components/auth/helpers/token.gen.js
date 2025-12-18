@@ -10,7 +10,7 @@ export const accessTokenGen = (user) =>
       role: user.role,
     },
     ENV.JWT_ACCESS_SECRET,
-    { expiresIn: ENV.JWT_ACCESS_EXPIRY }
+    { expiresIn: parseInt(ENV.JWT_ACCESS_EXPIRY) }
   );
 export const refreshTokenGen = (user) =>
   jwt.sign(
@@ -18,5 +18,5 @@ export const refreshTokenGen = (user) =>
       id: user.id,
     },
     ENV.JWT_REFRESH_SECRET,
-    { expiresIn: ENV.JWT_REFRESH_EXPIRY }
+    { expiresIn: parseInt(ENV.JWT_REFRESH_EXPIRY) }
   );

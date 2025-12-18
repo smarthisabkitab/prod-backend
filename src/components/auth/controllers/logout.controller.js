@@ -38,7 +38,13 @@ export const logoutController = async (req, res) => {
       res.clearCookie("refreshToken", {
         httpOnly: true,
         secure: ENV.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax",
+      });
+
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: ENV.NODE_ENV === "production",
+        sameSite: "lax",
       });
 
       return res.status(200).json({
